@@ -72,7 +72,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         fa=f.read()
         if '.css' in path:
             final =  "HTTP/1.1 200 OK \nContent-type:text/css; charset=utf-8\n\n"
-        elif '.html' in path':
+        elif '.html' in path:
             final =  "HTTP/1.1 200 OK \nContent-type:text/html; charset=utf-8\n\n"
         final = final + fa
         self.request.sendall(final.encode())
