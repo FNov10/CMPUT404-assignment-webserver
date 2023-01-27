@@ -1,5 +1,5 @@
 #  coding: utf-8 
-import socketserver
+import socketserver,os
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -31,9 +31,52 @@ class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+        #print(str(self.data))
+        if "GET" in str(self.data):
+            index1 = str(self.data).index("GET")
+            index2 = str(self.data).index("HTTP")   
+            rest = ''
+            for idx in range(index1 + 3 + 1, index2):
+                rest = rest + str(self.data)[idx]
+            #print(rest)
+            path = 'www'+rest.strip()
+            path = path.replace('..','')
+            x = False      
+            print ("Got a request of: %s\n" % self.data)
+            try:
+                if path[-1] != '/' and '.css' not in path and '.html' not in path:
+                    
+                    path +='/'
+                    if os.path.exists(path):
 
+                        header = "HTTP/1.1 301 Moved Permanently \n"
+                        header = header + "Location: " + path[3:]
+                        print(path[3:])
+                        self.request.sendall(header.encode())
+                    else: raise FileNotFoundError
+                else:
+                    x = True
+                    self.Handle200OK(path)
+            except FileNotFoundError:
+                self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\nContent type: text/html"+ "\n\n"+ "404 Path not found :(", "utf-8"))
+            except IsADirectoryError:
+                path+='index.html'
+                if x:
+                    self.Handle200OK(path)
+                #print('skibididobdobdoboyesyesyesyes')     
+        else:
+            self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r\nContent type: text/html"+ "\n\n"+ "405!!", "utf-8"))
+
+    def Handle200OK(self,path):
+        f = open((path),'r' )           
+        fa=f.read()
+        if '.css' in path:
+            final =  "HTTP/1.1 200 OK \nContent-type:text/css; charset=utf-8\n\n"
+        else:
+            final =  "HTTP/1.1 200 OK \nContent-type:text/html; charset=utf-8\n\n"
+        final = final + fa
+        self.request.sendall(final.encode())
+        
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
 
